@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DJI Drone Shop do not pay with pay pall your money will be tacken and you will not recive the product</title>
+    <title>DJI Drone Shop</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -35,6 +35,12 @@
     </header>
 
     <main class="container mx-auto px-4 py-24 flex flex-col lg:flex-row">
+        <!-- New: Disclaimer Banner -->
+        <div class="w-full bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg shadow-md mb-8" role="alert">
+            <p class="font-bold text-lg">⚠️ Demo Shop Notice ⚠️</p>
+            <p class="text-base">This is a demonstration website for educational purposes only. Do not attempt to place orders as they will not be fulfilled, and no products will be shipped.</p>
+        </div>
+
         <!-- Main Product Display -->
         <section id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 flex-grow">
             <!-- Products will be injected here by JavaScript -->
@@ -48,7 +54,7 @@
                 <div class="flex-1 text-center md:text-left">
                     <h2 id="detail-name" class="text-4xl font-extrabold text-gray-900 mb-2"></h2>
                     <p id="detail-price" class="text-3xl font-semibold text-blue-600 mb-4"></p>
-                    <p id="detail-description" class="text-gray-700 text-lg mb-6">Experience unparalleled aerial photography with this cutting-edge drone. Featuring advanced stabilization, long flight times, and stunning video capabilities, it's perfect for both enthusiasts and professionals.</p>
+                    <p id="detail-description" class="text-gray-700 text-lg mb-6"></p>
                     <button id="add-to-cart-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-xl transition duration-200">
                         Add to Cart
                     </button>
@@ -84,13 +90,14 @@
         const PAYPAL_BUSINESS_EMAIL = 'domwohl@outlook.com'; // e.g., 'your_business_email@example.com'
 
         const products = [
-            { id: 'dji-neo', name: 'DJI Neo', price: 999.99, imageUrl: 'https://placehold.co/400x300/F0F4F8/164E63?text=DJI+Neo' },
-            { id: 'dji-neo-fly-more', name: 'DJI Neo Fly More Combo', price: 1299.99, imageUrl: 'https://placehold.co/400x300/E0E7FF/3730A3?text=DJI+Neo+FMC' },
-            { id: 'dji-neo-fly-more-fpv', name: 'DJI Neo Fly More Combo FPV', price: 1499.99, imageUrl: 'https://placehold.co/400x300/F0FDF4/15803D?text=DJI+Neo+FMC+FPV' },
-            { id: 'dji-mavic-3-pro', name: 'DJI Mavic 3 Pro', price: 2199.99, imageUrl: 'https://placehold.co/400x300/FFF7ED/C2410C?text=DJI+Mavic+3+Pro' },
-            { id: 'dji-mavic-4-pro', name: 'DJI Mavic 4 Pro', price: 2999.99, imageUrl: 'https://placehold.co/400x300/F0F4F8/164E63?text=DJI+Mavic+4+Pro' },
-            { id: 'cow', name: 'cow', price: 300.00, imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGX9jxhm84-PfKr2yFIvLkd5sLrJVlHjBnPLdOjhmsNIoR70gJ4buTitKKDxJZ_avmmks&usqp=CAU' },
-            { id: 'dji-phantom-2', name: 'dji phantom 2', price: 300.00, imageUrl: 'https://placehold.co/400x300/94A3B8/F8FAFC?text=Product+Image' },
+            // Updated: Added a 'description' property to each product.
+            { id: 'dji-neo', name: 'DJI Neo', price: 999.99, imageUrl: 'https://placehold.co/400x300/F0F4F8/164E63?text=DJI+Neo', description: 'The DJI Neo offers advanced flight capabilities and stunning 4K video quality, perfect for beginners and seasoned pilots alike.' },
+            { id: 'dji-neo-fly-more', name: 'DJI Neo Fly More Combo', price: 1299.99, imageUrl: 'https://placehold.co/400x300/E0E7FF/3730A3?text=DJI+Neo+FMC', description: 'Get more flight time and accessories with the Fly More Combo, including extra batteries and a carrying bag.' },
+            { id: 'dji-neo-fly-more-fpv', name: 'DJI Neo Fly More Combo FPV', price: 1499.99, imageUrl: 'https://placehold.co/400x300/F0FDF4/15803D?text=DJI+Neo+FMC+FPV', description: 'Experience immersive flight with the FPV (First Person View) combo, bringing you closer to the action than ever before.' },
+            { id: 'dji-mavic-3-pro', name: 'DJI Mavic 3 Pro', price: 2199.99, imageUrl: 'https://placehold.co/400x300/FFF7ED/C2410C?text=DJI+Mavic+3+Pro', description: 'The professional-grade DJI Mavic 3 Pro features a Hasselblad camera and omnidirectional obstacle sensing for superior aerial imaging.' },
+            { id: 'dji-mavic-4-pro', name: 'DJI Mavic 4 Pro', price: 2999.99, imageUrl: 'https://placehold.co/400x300/F0F4F8/164E63?text=DJI+Mavic+4+Pro', description: 'Unleash ultimate aerial creativity with the DJI Mavic 4 Pro, boasting enhanced flight performance and cutting-edge imaging technology.' },
+            { id: 'cow', name: 'cow', price: 300.00, imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGX9jxhm84-PfKr2yFIvLkd5sLrJVlHjBnPLdOjhmsNIoR70gJ4buTitKKDxJZ_avmmks&usqp=CAU', description: 'A delightful and robust bovine companion, perfect for farm simulation games or simply as a cute addition to your collection.' },
+            { id: 'dji-phantom-2', name: 'dji phantom 2', price: 300.00, imageUrl: 'https://placehold.co/400x300/94A3B8/F8FAFC?text=Product+Image', description: 'The classic DJI Phantom 2, a reliable drone for stable flight and basic aerial photography needs.' },
         ];
 
         let cartItems = []; // Array to store items in the shopping cart
@@ -101,6 +108,7 @@
         const detailImage = document.getElementById('detail-image');
         const detailName = document.getElementById('detail-name');
         const detailPrice = document.getElementById('detail-price');
+        const detailDescription = document.getElementById('detail-description'); // Ensure this element is correctly referenced
         const addToCartBtn = document.getElementById('add-to-cart-btn');
         const closeProductDetailBtn = document.getElementById('close-product-detail');
 
@@ -148,6 +156,8 @@
                 detailImage.alt = selectedProduct.name;
                 detailName.textContent = selectedProduct.name;
                 detailPrice.textContent = `$${selectedProduct.price.toFixed(2)}`;
+                // Updated: Display the product's specific description, or a generic one if not provided
+                detailDescription.textContent = selectedProduct.description || 'Experience unparalleled aerial photography with this cutting-edge drone. Featuring advanced stabilization, long flight times, and stunning video capabilities, it\'s perfect for both enthusiasts and professionals.';
 
                 productDetailOverlay.classList.remove('opacity-0', 'pointer-events-none');
                 productDetailOverlay.querySelector('div').classList.remove('scale-95');
@@ -386,3 +396,4 @@
     </script>
 </body>
 </html>
+
