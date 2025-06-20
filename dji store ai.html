@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJI Drone Shop</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and a smooth transition for the cart */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f8fafc; /* Tailwind: bg-slate-50 */
+        }
+        .cart-sidebar {
+            transition: right 0.3s ease-in-out;
+        }
+        .product-detail-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+    <header class="bg-white shadow-md p-4 flex justify-between items-center fixed top-0 left-0 w-full z-20">
+        <h1 class="text-3xl font-extrabold text-blue-800">
+            DJI Drone Shop
+        </h1>
+        <!-- Cart Toggle Button -->
+        <button id="cart-toggle-btn" class="relative p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0-10a2 2 0 110 4 2 2 0 010-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span id="cart-item-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+        </button>
+    </header>
+
+    <main class="container mx-auto px-4 py-24 flex flex-col lg:flex-row">
+        <!-- Main Product Display -->
+        <section id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 flex-grow">
+            <!-- Products will be injected here by JavaScript -->
+        </section>
+
+        <!-- Product Detail Overlay (Initially Hidden) -->
+        <div id="product-detail-overlay" class="product-detail-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-40 opacity-0 pointer-events-none">
+            <div class="bg-white rounded-lg shadow-xl p-6 relative max-w-3xl w-full flex flex-col md:flex-row items-center gap-6 transform scale-95 transition-transform duration-300">
+                <button id="close-product-detail" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-3xl font-bold">&times;</button>
+                <img id="detail-image" src="" alt="Product Image" class="w-full md:w-1/2 h-64 md:h-auto object-cover rounded-lg shadow-md mb-4 md:mb-0">
+                <div class="flex-1 text-center md:text-left">
+                    <h2 id="detail-name" class="text-4xl font-extrabold text-gray-900 mb-2"></h2>
+                    <p id="detail-price" class="text-3xl font-semibold text-blue-600 mb-4"></p>
+                    <p id="detail-description" class="text-gray-700 text-lg mb-6">Experience unparalleled aerial photography with this cutting-edge drone. Featuring advanced stabilization, long flight times, and stunning video capabilities, it's perfect for both enthusiasts and professionals.</p>
+                    <button id="add-to-cart-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-xl transition duration-200">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopping Cart Sidebar -->
+        <aside id="cart-sidebar" class="cart-sidebar fixed top-0 right-[-100%] w-full sm:w-80 md:w-96 h-full bg-white shadow-2xl p-6 flex flex-col z-30">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-3xl font-extrabold text-blue-800">Your Cart</h2>
+                <button id="close-cart-btn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold">&times;</button>
+            </div>
+            <div id="cart-items-container" class="flex-grow overflow-y-auto mb-6">
+                <!-- Cart items will be injected here by JavaScript -->
+                <p id="empty-cart-message" class="text-gray-600 text-center py-8">Your cart is empty.</p>
+            </div>
+            <div class="border-t pt-6">
+                <div class="flex justify-between items-center text-2xl font-bold text-gray-900 mb-4">
+                    <span>Total:</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+                <div id="paypal-button-container">
+                    <!-- PayPal form will be rendered here -->
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        // IMPORTANT: Replace 'YOUR_PAYPAL_BUSINESS_EMAIL' with the email address linked to your PayPal Business account.
+        // This is the email where you want to receive payments.
+        const PAYPAL_BUSINESS_EMAIL = 'domwohl@outlook.com'; // e.g., 'your_business_email@example.com'
+
+        const products = [
+            { id: 'dji-neo', name: 'DJI Neo', price: 999.99, imageUrl: 'https://placehold.co/400x300/F0F4F8/164E63?text=DJI+Neo' },
+            { id: 'dji-neo-fly-more', name: 'DJI Neo Fly More Combo', price: 1299.99, imageUrl: 'https://placehold.co/400x300/E0E7FF/3730A3?text=DJI+Neo+FMC' },
+            { id: 'dji-neo-fly-more-fpv', name: 'DJI Neo Fly More Combo FPV', price: 1499.99, imageUrl: 'https://placehold.co/400x300/F0FDF4/15803D?text=DJI+Neo+FMC+FPV' },
+            { id: 'dji-mavic-3-pro', name: 'DJI Mavic 3 Pro', price: 2199.99, imageUrl: 'https://placehold.co/400x300/FFF7ED/C2410C?text=DJI+Mavic+3+Pro' },
+            { id: 'dji-mavic-4-pro', name: 'DJI Mavic 4 Pro', price: 2999.99, imageUrl: 'https://placehold.co/400x300/F0F4F8/164E63?text=DJI+Mavic+4+Pro' },
+            { id: 'cow', name: 'cow', price: 300.00, imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGX9jxhm84-PfKr2yFIvLkd5sLrJVlHjBnPLdOjhmsNIoR70gJ4buTitKKDxJZ_avmmks&usqp=CAU' },
+            { id: 'dji-phantom-2', name: 'dji phantom 2', price: 300.00, imageUrl: 'https://placehold.co/400x300/94A3B8/F8FAFC?text=Product+Image' },
+        ];
+
+        let cartItems = []; // Array to store items in the shopping cart
+
+        // Get DOM elements
+        const productGrid = document.getElementById('product-grid');
+        const productDetailOverlay = document.getElementById('product-detail-overlay');
+        const detailImage = document.getElementById('detail-image');
+        const detailName = document.getElementById('detail-name');
+        const detailPrice = document.getElementById('detail-price');
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        const closeProductDetailBtn = document.getElementById('close-product-detail');
+
+        const cartToggleBtn = document.getElementById('cart-toggle-btn');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const closeCartBtn = document.getElementById('close-cart-btn');
+        const cartItemsContainer = document.getElementById('cart-items-container');
+        const cartTotalSpan = document.getElementById('cart-total');
+        const cartItemCountSpan = document.getElementById('cart-item-count');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+
+        let selectedProduct = null; // To keep track of the product currently in the detail view
+
+        // --- Product Display Functions ---
+
+        /**
+         * Renders all products to the main grid.
+         */
+        function renderProducts() {
+            productGrid.innerHTML = ''; // Clear existing products
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'bg-white rounded-lg shadow-xl overflow-hidden cursor-pointer hover:shadow-2xl transform hover:scale-105 transition duration-300';
+                productCard.innerHTML = `
+                    <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-56 object-cover">
+                    <div class="p-6 text-center">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">${product.name}</h3>
+                        <p class="text-xl font-semibold text-blue-600">$${product.price.toFixed(2)}</p>
+                    </div>
+                `;
+                // Attach click listener to open product detail
+                productCard.addEventListener('click', () => openProductDetail(product.id));
+                productGrid.appendChild(productCard);
+            });
+        }
+
+        /**
+         * Opens the product detail overlay for a given product ID.
+         * @param {string} productId - The ID of the product to display.
+         */
+        function openProductDetail(productId) {
+            selectedProduct = products.find(p => p.id === productId);
+            if (selectedProduct) {
+                detailImage.src = selectedProduct.imageUrl;
+                detailImage.alt = selectedProduct.name;
+                detailName.textContent = selectedProduct.name;
+                detailPrice.textContent = `$${selectedProduct.price.toFixed(2)}`;
+
+                productDetailOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                productDetailOverlay.querySelector('div').classList.remove('scale-95');
+                productDetailOverlay.querySelector('div').classList.add('scale-100');
+            }
+        }
+
+        /**
+         * Closes the product detail overlay.
+         */
+        function closeProductDetail() {
+            productDetailOverlay.querySelector('div').classList.remove('scale-100');
+            productDetailOverlay.querySelector('div').classList.add('scale-95');
+            // Use a timeout to allow the scale transition to complete before hiding
+            setTimeout(() => {
+                productDetailOverlay.classList.add('opacity-0', 'pointer-events-none');
+                selectedProduct = null;
+            }, 300);
+        }
+
+        // --- Shopping Cart Functions ---
+
+        /**
+         * Adds the selected product to the cart.
+         */
+        function handleAddToCart() {
+            if (selectedProduct) {
+                const existingItem = cartItems.find(item => item.id === selectedProduct.id);
+                if (existingItem) {
+                    existingItem.quantity++;
+                } else {
+                    cartItems.push({ ...selectedProduct, quantity: 1 });
+                }
+                renderCart();
+                closeProductDetail(); // Close detail view after adding to cart
+                toggleCart(true); // Open cart automatically
+            }
+        }
+
+        /**
+         * Removes an item from the cart.
+         * @param {string} productId - The ID of the product to remove.
+         */
+        function removeFromCart(productId) {
+            cartItems = cartItems.filter(item => item.id !== productId);
+            renderCart();
+        }
+
+        /**
+         * Updates the quantity of an item in the cart.
+         * @param {string} productId - The ID of the product.
+         * @param {number} newQuantity - The new quantity for the product.
+         */
+        function updateCartQuantity(productId, newQuantity) {
+            const item = cartItems.find(item => item.id === productId);
+            if (item) {
+                if (newQuantity <= 0) {
+                    removeFromCart(productId);
+                } else {
+                    item.quantity = newQuantity;
+                }
+            }
+            renderCart();
+        }
+
+        /**
+         * Renders the current state of the shopping cart.
+         */
+        function renderCart() {
+            cartItemsContainer.innerHTML = ''; // Clear existing cart items
+            let total = 0;
+
+            if (cartItems.length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+                cartItemsContainer.appendChild(emptyCartMessage);
+            } else {
+                emptyCartMessage.classList.add('hidden');
+                cartItems.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+
+                    const cartItemDiv = document.createElement('div');
+                    cartItemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg shadow-sm mb-3';
+                    cartItemDiv.innerHTML = `
+                        <img src="${item.imageUrl}" alt="${item.name}" class="w-16 h-16 object-cover rounded-md mr-3">
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg text-gray-800">${item.name}</h4>
+                            <p class="text-blue-600 text-md">$${item.price.toFixed(2)} x ${item.quantity}</p>
+                            <p class="text-gray-700 text-sm">Subtotal: $${itemTotal.toFixed(2)}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button data-id="${item.id}" data-action="decrease" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">-</button>
+                            <span class="text-gray-900 font-medium">${item.quantity}</span>
+                            <button data-id="${item.id}" data-action="increase" class="quantity-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">+</button>
+                            <button data-id="${item.id}" data-action="remove" class="remove-item-btn text-red-500 hover:text-red-700 ml-2 focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm1 3a1 1 0 100 2h4a1 1 0 100-2H8z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(cartItemDiv);
+                });
+            }
+
+            cartTotalSpan.textContent = `$${total.toFixed(2)}`;
+            cartItemCountSpan.textContent = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+            // Now render the PayPal form
+            renderPayPalButton();
+        }
+
+        /**
+         * Toggles the visibility of the cart sidebar.
+         * @param {boolean} [forceOpen] - If true, forces the cart to open. If false, forces it to close. If undefined, toggles.
+         */
+        function toggleCart(forceOpen) {
+            const isOpen = cartSidebar.classList.contains('right-0');
+
+            if (forceOpen === true) {
+                if (!isOpen) {
+                    cartSidebar.classList.remove('right-[-100%]');
+                    cartSidebar.classList.add('right-0');
+                }
+            } else if (forceOpen === false) {
+                if (isOpen) {
+                    cartSidebar.classList.remove('right-0');
+                    cartSidebar.classList.add('right-[-100%]');
+                }
+            } else { // Toggle behavior
+                if (isOpen) {
+                    cartSidebar.classList.remove('right-0');
+                    cartSidebar.classList.add('right-[-100%]');
+                } else {
+                    cartSidebar.classList.remove('right-[-100%]');
+                    cartSidebar.classList.add('right-0');
+                }
+            }
+        }
+
+        // --- PayPal Integration (Form-Based) ---
+
+        /**
+         * Renders the PayPal form.
+         * This function should be called whenever the cart items change.
+         */
+        function renderPayPalButton() {
+            const paypalButtonContainer = document.getElementById('paypal-button-container');
+            paypalButtonContainer.innerHTML = ''; // Clear previous button instance
+
+            if (cartItems.length === 0) {
+                paypalButtonContainer.innerHTML = '<p class="text-center text-gray-500">Add items to cart to enable checkout.</p>';
+                return;
+            }
+
+            // Create the PayPal form
+            const paypalForm = document.createElement('form');
+            paypalForm.id = 'paypal-form';
+            paypalForm.action = 'https://www.paypal.com/cgi-bin/webscr';
+            paypalForm.method = 'post';
+            paypalForm.target = '_blank'; // Opens PayPal in a new tab/window
+
+            // Hidden fields for PayPal cart checkout
+            paypalForm.innerHTML += `<input type="hidden" name="cmd" value="_cart">`;
+            paypalForm.innerHTML += `<input type="hidden" name="upload" value="1">`;
+            paypalForm.innerHTML += `<input type="hidden" name="business" value="${PAYPAL_BUSINESS_EMAIL}">`;
+            paypalForm.innerHTML += `<input type="hidden" name="currency_code" value="CAD">`; // Changed currency to CAD
+
+            // Add each item as hidden inputs
+            cartItems.forEach((item, index) => {
+                const itemNumber = index + 1; // PayPal uses 1-based indexing for cart items
+                paypalForm.innerHTML += `<input type="hidden" name="item_name_${itemNumber}" value="${item.name}">`;
+                paypalForm.innerHTML += `<input type="hidden" name="amount_${itemNumber}" value="${item.price.toFixed(2)}">`;
+                paypalForm.innerHTML += `<input type="hidden" name="quantity_${itemNumber}" value="${item.quantity}">`;
+            });
+
+            // Add a submit button with styling
+            paypalForm.innerHTML += `
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-xl transition duration-200 mt-4">
+                    Checkout with PayPal
+                </button>
+            `;
+
+            paypalButtonContainer.appendChild(paypalForm);
+        }
+
+        // --- Event Listeners ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts(); // Initial render of products
+            renderCart();    // Initial render of cart (will be empty)
+
+            // Event listener for opening product detail from overlay background
+            productDetailOverlay.addEventListener('click', (event) => {
+                // Only close if clicked directly on the overlay background, not the content
+                if (event.target === productDetailOverlay) {
+                    closeProductDetail();
+                }
+            });
+
+            // Event listener for closing product detail via button
+            closeProductDetailBtn.addEventListener('click', closeProductDetail);
+
+            // Event listener for adding to cart from detail view
+            addToCartBtn.addEventListener('click', handleAddToCart);
+
+            // Event listener for opening/closing cart
+            cartToggleBtn.addEventListener('click', () => toggleCart());
+            closeCartBtn.addEventListener('click', () => toggleCart(false)); // Force close cart
+
+            // Event listener for cart item quantity changes and removal
+            cartItemsContainer.addEventListener('click', (event) => {
+                // Use .closest to find the button that has the data-action attribute
+                const button = event.target.closest('.remove-item-btn, .quantity-btn');
+
+                if (button) { // Ensure a relevant button was clicked
+                    const productId = button.dataset.id;
+                    const action = button.dataset.action;
+
+                    if (action === 'remove') {
+                        removeFromCart(productId);
+                    } else if (action === 'increase') {
+                        const item = cartItems.find(item => item.id === productId);
+                        if (item) {
+                            updateCartQuantity(productId, item.quantity + 1);
+                        }
+                    } else if (action === 'decrease') {
+                        const item = cartItems.find(item => item.id === productId);
+                        if (item) {
+                            updateCartQuantity(productId, item.quantity - 1);
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

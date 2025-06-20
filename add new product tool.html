@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Product Tool</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="p-8 bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg">
+        <h1 class="text-3xl font-extrabold text-blue-800 mb-6 text-center">Add New Product</h1>
+        <p class="text-gray-600 mb-6 text-center">
+            Enter the details for your new product. The tool will generate the code snippet you need to add to your main
+            <code class="bg-gray-200 p-1 rounded">dji store ai.html</code> file.
+        </p>
+
+        <form id="product-form" class="space-y-4">
+            <div>
+                <label for="product-name" class="block text-sm font-medium text-gray-700 mb-1">Product Name:</label>
+                <input type="text" id="product-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <div>
+                <label for="product-price" class="block text-sm font-medium text-gray-700 mb-1">Product Price ($):</label>
+                <input type="number" id="product-price" step="0.01" min="0" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <div>
+                <label for="image-url" class="block text-sm font-medium text-gray-700 mb-1">Image URL: (Optional)</label>
+                <input type="url" id="image-url" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="e.g., https://placehold.co/400x300/...">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition duration-200">
+                Generate Product Code
+            </button>
+        </form>
+
+        <div id="result-container" class="mt-8 hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-3">Copy and Paste This Code:</h2>
+            <div class="bg-gray-800 text-white p-4 rounded-md overflow-x-auto relative">
+                <button id="copy-button" class="absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white text-xs px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">Copy</button>
+                <pre><code id="generated-code" class="whitespace-pre-wrap"></code></pre>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+                Paste this generated line into the `products` array in your `dji store ai.html` file.
+                Make sure to add a comma (`,`) at the end of the previous product entry if this is not the last one!
+            </p>
+        </div>
+
+        <div id="message-box" class="mt-4 p-3 rounded-md text-center hidden" role="alert"></div>
+    </div>
+
+    <script>
+        const productForm = document.getElementById('product-form');
+        const productNameInput = document.getElementById('product-name');
+        const productPriceInput = document.getElementById('product-price');
+        const imageUrlInput = document.getElementById('image-url');
+        const resultContainer = document.getElementById('result-container');
+        const generatedCodeElement = document.getElementById('generated-code');
+        const copyButton = document.getElementById('copy-button');
+        const messageBox = document.getElementById('message-box');
+
+        // Default placeholder image if no URL is provided
+        const DEFAULT_PLACEHOLDER_IMAGE = 'https://placehold.co/400x300/94A3B8/F8FAFC?text=Product+Image';
+
+
+        productForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const name = productNameInput.value.trim();
+            const price = parseFloat(productPriceInput.value).toFixed(2);
+            let imageUrl = imageUrlInput.value.trim(); // Changed to `let`
+
+            // Use default placeholder if image URL is empty
+            if (!imageUrl) {
+                imageUrl = DEFAULT_PLACEHOLDER_IMAGE;
+            }
+
+            const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); // Simple slug for ID
+
+            if (name && price) { // Only name and price are required now
+                const productCode = `{ id: '${id}', name: '${name}', price: ${price}, imageUrl: '${imageUrl}' }`;
+                generatedCodeElement.textContent = productCode;
+                resultContainer.classList.remove('hidden');
+                showMessage('Product code generated!', 'success');
+            } else {
+                showMessage('Please fill in Product Name and Price.', 'error');
+            }
+        });
+
+        copyButton.addEventListener('click', function() {
+            const textToCopy = generatedCodeElement.textContent;
+            try {
+                // For secure contexts, navigator.clipboard.writeText is preferred
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        showMessage('Copied to clipboard!', 'success');
+                    }).catch(err => {
+                        console.error('Failed to copy using clipboard API:', err);
+                        // Fallback for older browsers or insecure contexts
+                        fallbackCopyTextToClipboard(textToCopy);
+                    });
+                } else {
+                    fallbackCopyTextToClipboard(textToCopy);
+                }
+            } catch (err) {
+                console.error('Could not copy text: ', err);
+                showMessage('Failed to copy. Please copy manually.', 'error');
+            }
+        });
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showMessage('Copied to clipboard! (Fallback method)', 'success');
+                } else {
+                    showMessage('Failed to copy using fallback. Please copy manually.', 'error');
+                }
+            } catch (err) {
+                showMessage('Failed to copy. Please copy manually.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {'success'|'error'} type - The type of message ('success' or 'error').
+         */
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            }
+            // Hide message after a few seconds
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
